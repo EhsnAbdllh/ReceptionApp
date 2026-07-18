@@ -66,11 +66,12 @@ class PrinterService:
     @staticmethod
     def print_label(registrant):
         img, temp_path = PrinterService.generate_label_image(registrant)
+        printer_true_name = PrinterService.find_printer(PRINTER_NAME)
         try:
-            hprinter = win32print.OpenPrinter(PRINTER_NAME)
+            hprinter = win32print.OpenPrinter(printer_true_name)
             try:
                 hdc = win32ui.CreateDC()
-                hdc.CreatePrinterDC(PRINTER_NAME)
+                hdc.CreatePrinterDC(printer_true_name)
                 hdc.StartDoc('Label Print')
                 hdc.StartPage()
                 
@@ -85,3 +86,15 @@ class PrinterService:
                 win32print.ClosePrinter(hprinter)
         except Exception as e:
             raise RuntimeError(f"خطا در ارتباط با پرینتر: {e}")
+
+    @staticmethod
+    def find_printer(target_name):
+        flags = win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS
+        printers = win32print.EnumPrinters(flags)
+        target_name_lower = target_name.lower()
+
+        for printer in printers:
+            printer_name = printer[2]
+            if target_name_lower in printer_name.lower():
+                return printer_name
+        return None
