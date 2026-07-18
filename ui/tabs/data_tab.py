@@ -21,7 +21,7 @@ class EditRegistrantDialog(QDialog):
         self.name_input = QLineEdit(self.registrant.full_name)
         self.phone_input = QLineEdit(self.registrant.phone_number)
         
-        self.id_input = QLineEdit(str(self.registrant.id))
+        self.id_input = QLineEdit(str(self.registrant.id)[:4])
         self.id_input.setReadOnly(True)
         self.time_input = QLineEdit(to_persian_digits(self.registrant.registration_time))
         self.time_input.setReadOnly(True)
@@ -94,7 +94,9 @@ class DataTab(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(["کد", "نام", "موبایل", "زمان ثبت", "سانس", "عملیات"])
+        
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table)
         
         self.setLayout(layout)
@@ -130,7 +132,7 @@ class DataTab(QWidget):
         query = self.get_query()
         self.table.setRowCount(query.count())
         for row, reg in enumerate(query):
-            self.table.setItem(row, 0, QTableWidgetItem(to_persian_digits(str(reg.id).split('-')[0])))
+            self.table.setItem(row, 0, QTableWidgetItem(to_persian_digits(str(reg.id)[:4])))
             self.table.setItem(row, 1, QTableWidgetItem(reg.full_name))
             self.table.setItem(row, 2, QTableWidgetItem(to_persian_digits(reg.phone_number)))
             self.table.setItem(row, 3, QTableWidgetItem(to_persian_digits(reg.registration_time)))
@@ -138,17 +140,44 @@ class DataTab(QWidget):
             
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
+            action_layout.setContentsMargins(2, 2, 2, 2)
+            action_layout.setSpacing(4)
             
             reprint_btn = QPushButton("چاپ مجدد")
-            reprint_btn.setStyleSheet("background-color: #2196F3; color: white;")
+            reprint_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #2196F3; 
+                    color: white; 
+                    padding: 2px 4px; 
+                    font-size: 11px;
+                }
+                QPushButton:hover {
+                    background-color: #1976D2;
+                }
+            """)
             reprint_btn.clicked.connect(lambda checked, r=reg: self.reprint_label(r))
             
             edit_btn = QPushButton("ویرایش")
+            edit_btn.setStyleSheet("""
+                QPushButton {
+                    padding: 2px 4px; 
+                    font-size: 11px;
+                }
+            """)
             edit_btn.clicked.connect(lambda checked, r=reg: self.edit_registrant(r))
             
             delete_btn = QPushButton("حذف")
-            delete_btn.setStyleSheet("background-color: #f44336; color: white;")
+            delete_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #f44336; 
+                    color: white; 
+                    padding: 2px 4px; 
+                    font-size: 11px;
+                }
+                QPushButton:hover {
+                    background-color: #d32f2f;
+                }
+            """)
             delete_btn.clicked.connect(lambda checked, r=reg: self.delete_registrant(r))
             
             action_layout.addWidget(reprint_btn)

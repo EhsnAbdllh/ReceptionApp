@@ -22,6 +22,31 @@ class EditSessionDialog(QDialog):
         self.end_input = JalaliDateTimePicker(initial_datetime_str=self.session.end_time)
         self.cap_input = QLineEdit(str(self.session.total_capacity))
         
+        self.start_input.dateTimeChanged.connect(self.on_start_changed)
+        self.end_input.dateTimeChanged.connect(self.on_end_changed)
+        
+    def on_start_changed(self, dt_str):
+        try:
+            start_dt = jdatetime.datetime.strptime(dt_str, "%Y/%m/%d %H:%M")
+            end_dt = start_dt + jdatetime.timedelta(minutes=30)
+            end_str = end_dt.strftime("%Y/%m/%d %H:%M")
+            self.end_input.blockSignals(True)
+            self.end_input.set_datetime(end_str)
+            self.end_input.blockSignals(False)
+        except Exception:
+            pass
+
+    def on_end_changed(self, dt_str):
+        try:
+            end_dt = jdatetime.datetime.strptime(dt_str, "%Y/%m/%d %H:%M")
+            start_dt = end_dt - jdatetime.timedelta(minutes=30)
+            start_str = start_dt.strftime("%Y/%m/%d %H:%M")
+            self.start_input.blockSignals(True)
+            self.start_input.set_datetime(start_str)
+            self.start_input.blockSignals(False)
+        except Exception:
+            pass
+        
         layout.addRow("شروع:", self.start_input)
         layout.addRow("پایان:", self.end_input)
         layout.addRow("ظرفیت:", self.cap_input)
@@ -70,6 +95,9 @@ class SessionTab(QWidget):
         self.start_input = JalaliDateTimePicker()
         self.end_input = JalaliDateTimePicker()
         
+        self.start_input.dateTimeChanged.connect(self.on_start_changed)
+        self.end_input.dateTimeChanged.connect(self.on_end_changed)
+        
         self.cap_input = QLineEdit()
         self.cap_input.setPlaceholderText("ظرفیت")
         
@@ -98,6 +126,28 @@ class SessionTab(QWidget):
         
         self.setLayout(layout)
         self.load_data()
+
+    def on_start_changed(self, dt_str):
+        try:
+            start_dt = jdatetime.datetime.strptime(dt_str, "%Y/%m/%d %H:%M")
+            end_dt = start_dt + jdatetime.timedelta(minutes=30)
+            end_str = end_dt.strftime("%Y/%m/%d %H:%M")
+            self.end_input.blockSignals(True)
+            self.end_input.set_datetime(end_str)
+            self.end_input.blockSignals(False)
+        except Exception:
+            pass
+
+    def on_end_changed(self, dt_str):
+        try:
+            end_dt = jdatetime.datetime.strptime(dt_str, "%Y/%m/%d %H:%M")
+            start_dt = end_dt - jdatetime.timedelta(minutes=30)
+            start_str = start_dt.strftime("%Y/%m/%d %H:%M")
+            self.start_input.blockSignals(True)
+            self.start_input.set_datetime(start_str)
+            self.start_input.blockSignals(False)
+        except Exception:
+            pass
 
     def load_data(self):
         sessions = Session.select()

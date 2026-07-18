@@ -1,8 +1,10 @@
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QComboBox, QLabel
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 import jdatetime
 
 class JalaliDateTimePicker(QWidget):
+    dateTimeChanged = pyqtSignal(str)
+
     def __init__(self, parent=None, initial_datetime_str=None):
         super().__init__(parent)
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
@@ -44,16 +46,40 @@ class JalaliDateTimePicker(QWidget):
         layout.addWidget(self.minute_cb)
         
         self.set_datetime(initial_datetime_str if initial_datetime_str else current_jdate.strftime("%Y/%m/%d %H:%M"))
+        
+        # Connect change signals to emit dateTimeChanged
+        self.year_cb.currentIndexChanged.connect(self._on_change)
+        self.month_cb.currentIndexChanged.connect(self._on_change)
+        self.day_cb.currentIndexChanged.connect(self._on_change)
+        self.hour_cb.currentIndexChanged.connect(self._on_change)
+        self.minute_cb.currentIndexChanged.connect(self._on_change)
+
+    def _on_change(self):
+        self.dateTimeChanged.emit(self.get_datetime_str())
 
     def set_datetime(self, dt_str):
         try:
             dt = jdatetime.datetime.strptime(dt_str, "%Y/%m/%d %H:%M")
+            
+            # Temporarily block signals of child combos to avoid multiple dateTimeChanged emissions
+            self.year_cb.blockSignals(True)
+            self.month_cb.blockSignals(True)
+            self.day_cb.blockSignals(True)
+            self.hour_cb.blockSignals(True)
+            self.minute_cb.blockSignals(True)
+            
             self.year_cb.setCurrentText(str(dt.year))
             self.month_cb.setCurrentText(f"{dt.month:02d}")
             self.day_cb.setCurrentText(f"{dt.day:02d}")
             self.hour_cb.setCurrentText(f"{dt.hour:02d}")
             min_val = (dt.minute // 5) * 5
             self.minute_cb.setCurrentText(f"{min_val:02d}")
+            
+            self.year_cb.blockSignals(False)
+            self.month_cb.blockSignals(False)
+            self.day_cb.blockSignals(False)
+            self.hour_cb.blockSignals(False)
+            self.minute_cb.blockSignals(False)
         except ValueError:
             pass
 

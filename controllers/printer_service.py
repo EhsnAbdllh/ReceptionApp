@@ -161,7 +161,7 @@ class PrinterService:
         today_shamsi = jdatetime.date.today().strftime("%Y/%m/%d")
         date_text = to_persian_digits(f"تاریخ: {today_shamsi}")
         
-        short_id = to_persian_digits(str(registrant.id).split('-')[0])
+        short_id = to_persian_digits(str(registrant.id)[:4])
         code_text = to_persian_digits(f"کد پذیرش: {short_id}")
         
         phone1_text = to_persian_digits(phone1_raw)

@@ -43,8 +43,18 @@ class RegistrationManager:
             return False, "ظرفیت سانس پر شده است."
             
         now_str = now.strftime("%Y/%m/%d %H:%M")
+        import uuid
+        # Generate a UUID whose first 4 characters are unique in the database
+        while True:
+            u = uuid.uuid4()
+            prefix = str(u)[:4].lower()
+            collision = Registrant.select().where(Registrant.id.cast('text').startswith(prefix)).exists()
+            if not collision:
+                break
+
         try:
             reg = Registrant.create(
+                id=u,
                 full_name=full_name,
                 phone_number=phone_number,
                 registration_time=now_str,
