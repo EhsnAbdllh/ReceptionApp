@@ -13,17 +13,27 @@ import jdatetime
 
 class PrinterService:
     @staticmethod
-    def generate_label_image(registrant):
+    def generate_label_image(registrant, lang="fa"):
         img = Image.new('RGB', (LABEL_WIDTH, LABEL_HEIGHT), color=(255, 255, 255))
         d = ImageDraw.Draw(img)
         
         try:
-            # Scale sizes to 32 and 24 to match the neatness of test_wristband, but optimized for Vazirmatn
-            font_title = ImageFont.truetype(str(FONT_PATH), 32)
-            font_body = ImageFont.truetype(str(FONT_PATH), 24)
+            # Single unified font size of 28 for all text elements as requested
+            font_base = ImageFont.truetype(str(FONT_PATH), 28)
         except IOError:
-            font_title = ImageFont.load_default()
-            font_body = ImageFont.load_default()
+            font_base = ImageFont.load_default()
+
+        # Determine language-specific labels and values
+        if lang == "ar":
+            parent_phone_label = "رقم الوالدين"
+            contact_title_text = "رقم مسئول موکب"
+            phone1_raw = "+964۷۸۲۵۵۵۴۲۰۲"
+            phone2_raw = "+989213496944"
+        else: # "fa"
+            parent_phone_label = "تلفن والدین"
+            contact_title_text = "تماس مسئول موکب"
+            phone1_raw = "+989213496944"
+            phone2_raw = "+964۷۸۲۵۵۵۴۲۰۲"
 
         try:
             import arabic_reshaper
@@ -67,7 +77,7 @@ class PrinterService:
                 y2_clipped = 288
                 
             if y1_clipped < y2_clipped and x1_clipped < x2_clipped:
-                d.line([(x1_clipped, y1_clipped), (x2_clipped, y2_clipped)], fill=(0, 0, 0), width=1)
+                d.line([(x1_clipped, y1_clipped), (x2_clipped, y2_clipped)], fill=(0, 0, 0), width=2)
                 
         # Right margin hatching
         for x in range(right_margin - LABEL_HEIGHT, right_hatch_end, hatch_spacing):
@@ -91,7 +101,7 @@ class PrinterService:
                 y2_clipped = 288
                 
             if y1_clipped < y2_clipped and x1_clipped < x2_clipped:
-                d.line([(x1_clipped, y1_clipped), (x2_clipped, y2_clipped)], fill=(0, 0, 0), width=1)
+                d.line([(x1_clipped, y1_clipped), (x2_clipped, y2_clipped)], fill=(0, 0, 0), width=2)
         
         # 1. Outer Border of the 8 cm text area (width=2 for minimal style, inset to y=12 and y=288)
         d.rectangle([left_margin, 12, right_margin, LABEL_HEIGHT-12], outline=(0, 0, 0), width=2)
@@ -123,16 +133,16 @@ class PrinterService:
                 
         # If the logo couldn't be drawn, fall back to the text title
         if not logo_drawn:
-            d.text((center_top, 100), prep_text(MOKEB_NAME), font=font_title, fill=(0,0,0), anchor="mm")
-            d.text((center_top, 210), prep_text(amood_str), font=font_body, fill=(0,0,0), anchor="mm")
+            d.text((center_top, 100), prep_text(MOKEB_NAME), font=font_base, fill=(0,0,0), anchor="mm")
+            d.text((center_top, 210), prep_text(amood_str), font=font_base, fill=(0,0,0), anchor="mm")
         else:
-            d.text((center_top, 236), prep_text(amood_str), font=font_body, fill=(0,0,0), anchor="mm")
+            d.text((center_top, 236), prep_text(amood_str), font=font_base, fill=(0,0,0), anchor="mm")
         
         # 3. Section 2 (Middle): Registrant details (dynamic info)
         center_middle = line2 + (line1 - line2) // 2
         
-        name_text = f"نام کودک: {registrant.full_name}"
-        phone_text = f"تلفن همراه: {to_persian_digits(registrant.phone_number)}"
+        name_text = registrant.full_name
+        phone_text = f"{parent_phone_label}: {to_persian_digits(registrant.phone_number)}"
         
         # Extract time portion (HH:MM) from registration_time
         time_part = registrant.registration_time.split(' ')[-1] if ' ' in registrant.registration_time else registrant.registration_time
@@ -140,39 +150,28 @@ class PrinterService:
         
         session_text = f"سانس ورود: {to_persian_digits(str(registrant.session.session_number))}"
         
-        d.text((center_middle, 60), prep_text(name_text), font=font_body, fill=(0,0,0), anchor="mm")
-        d.text((center_middle, 120), prep_text(phone_text), font=font_body, fill=(0,0,0), anchor="mm")
-        d.text((center_middle, 180), prep_text(time_text), font=font_body, fill=(0,0,0), anchor="mm")
-        d.text((center_middle, 240), prep_text(session_text), font=font_body, fill=(0,0,0), anchor="mm")
+        d.text((center_middle, 60), prep_text(name_text), font=font_base, fill=(0,0,0), anchor="mm")
+        d.text((center_middle, 120), prep_text(phone_text), font=font_base, fill=(0,0,0), anchor="mm")
+        d.text((center_middle, 180), prep_text(time_text), font=font_base, fill=(0,0,0), anchor="mm")
+        d.text((center_middle, 240), prep_text(session_text), font=font_base, fill=(0,0,0), anchor="mm")
         
         # 4. Section 3 (Left): Date, Registrant ID / Code, and Contact Phone
         center_bottom = left_margin + (line2 - left_margin) // 2
         
-        # Load custom font sizes for Section 3 to fit the 305px width perfectly
-        try:
-            font_date = ImageFont.truetype(str(FONT_PATH), 22)
-            font_code = ImageFont.truetype(str(FONT_PATH), 28)
-            font_contact_title = ImageFont.truetype(str(FONT_PATH), 20)
-            font_contact_phone = ImageFont.truetype(str(FONT_PATH), 22)
-        except IOError:
-            font_date = font_body
-            font_code = font_title
-            font_contact_title = font_body
-            font_contact_phone = font_body
-            
         today_shamsi = jdatetime.date.today().strftime("%Y/%m/%d")
         date_text = to_persian_digits(f"تاریخ: {today_shamsi}")
         
         short_id = to_persian_digits(str(registrant.id).split('-')[0])
         code_text = to_persian_digits(f"کد پذیرش: {short_id}")
         
-        contact_title_text = "تماس مسئول موکب"
-        contact_phone_text = to_persian_digits(CONTACT_PHONE)
+        phone1_text = to_persian_digits(phone1_raw)
+        phone2_text = to_persian_digits(phone2_raw)
         
-        d.text((center_bottom, 55), prep_text(date_text), font=font_date, fill=(0,0,0), anchor="mm")
-        d.text((center_bottom, 120), prep_text(code_text), font=font_code, fill=(0,0,0), anchor="mm")
-        d.text((center_bottom, 190), prep_text(contact_title_text), font=font_contact_title, fill=(0,0,0), anchor="mm")
-        d.text((center_bottom, 245), prep_text(contact_phone_text), font=font_contact_phone, fill=(0,0,0), anchor="mm")
+        d.text((center_bottom, 45), prep_text(date_text), font=font_base, fill=(0,0,0), anchor="mm")
+        d.text((center_bottom, 100), prep_text(code_text), font=font_base, fill=(0,0,0), anchor="mm")
+        d.text((center_bottom, 155), prep_text(contact_title_text), font=font_base, fill=(0,0,0), anchor="mm")
+        d.text((center_bottom, 205), prep_text(phone1_text), font=font_base, fill=(0,0,0), anchor="mm")
+        d.text((center_bottom, 255), prep_text(phone2_text), font=font_base, fill=(0,0,0), anchor="mm")
         
         temp_path = BASE_DIR / "last_label.png"
         img.save(temp_path)
@@ -205,8 +204,8 @@ class PrinterService:
         return None
 
     @staticmethod
-    def print_label(registrant):
-        img, temp_path = PrinterService.generate_label_image(registrant)
+    def print_label(registrant, lang="fa"):
+        img, temp_path = PrinterService.generate_label_image(registrant, lang=lang)
         
         # Search for the printer containing the target name
         print(f"\n[PRINTER DEBUG] Configured Target: '{PRINTER_NAME}'")

@@ -47,8 +47,9 @@ class EditSessionDialog(QDialog):
             QMessageBox.warning(self, "خطا", "ظرفیت باید عدد باشد.")
             return
 
-        if SessionManager.is_overlap(start, end, exclude_session_id=self.session.id):
-            QMessageBox.warning(self, "خطا", "تداخل زمانی با سانس‌های دیگر وجود دارد یا زمان پایان کوچکتر از شروع است.")
+        is_valid, err_msg = SessionManager.validate_session_times(start, end, exclude_session_id=self.session.id)
+        if not is_valid:
+            QMessageBox.warning(self, "خطا", err_msg)
             return
             
         self.session.start_time = start
@@ -129,8 +130,9 @@ class SessionTab(QWidget):
             start = self.start_input.get_datetime_str()
             end = self.end_input.get_datetime_str()
 
-            if SessionManager.is_overlap(start, end):
-                QMessageBox.warning(self, "خطا", "تداخل زمانی با سانس‌های دیگر وجود دارد یا زمان پایان کوچکتر از شروع است.")
+            is_valid, err_msg = SessionManager.validate_session_times(start, end)
+            if not is_valid:
+                QMessageBox.warning(self, "خطا", err_msg)
                 return
                 
             num = SessionManager.get_next_session_number()

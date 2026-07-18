@@ -18,7 +18,7 @@ class RegistrationManager:
         return bool(name and len(name.strip()) > 2)
 
     @staticmethod
-    def register(full_name, phone_number, session):
+    def register(full_name, phone_number, session, print_lang="fa"):
         if not session:
             return False, "سانس فعالی یافت نشد."
         
@@ -28,11 +28,21 @@ class RegistrationManager:
         if not RegistrationManager.validate_phone(phone_number):
             return False, "شماره موبایل نامعتبر است. (مثال: 09123456789)"
 
+        # Check if the session's time is over
+        now = jdatetime.datetime.now()
+        try:
+            s_end = jdatetime.datetime.strptime(session.end_time, "%Y/%m/%d %H:%M")
+        except Exception:
+            return False, "زمان پایان سانس نامعتبر است."
+            
+        if now > s_end:
+            return False, "زمان این سانس به پایان رسیده است و امکان ثبت‌نام در آن وجود ندارد."
+
         remaining = SessionManager.get_remaining_capacity(session)
         if remaining <= 0:
             return False, "ظرفیت سانس پر شده است."
             
-        now_str = jdatetime.datetime.now().strftime("%Y/%m/%d %H:%M")
+        now_str = now.strftime("%Y/%m/%d %H:%M")
         try:
             reg = Registrant.create(
                 full_name=full_name,
@@ -41,7 +51,7 @@ class RegistrationManager:
                 session=session
             )
             try:
-                PrinterService.print_label(reg)
+                PrinterService.print_label(reg, lang=print_lang)
             except Exception as e:
                 return True, f"ثبت نام با موفقیت انجام شد، اما در چاپ خطا رخ داد:\n{str(e)}"
             
