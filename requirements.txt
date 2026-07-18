@@ -1,0 +1,9 @@
+PyQt6
+peewee
+pandas
+openpyxl
+jdatetime
+Pillow
+pywin32
+arabic-reshaper
+python-bidi
