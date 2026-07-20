@@ -3,3 +3,5 @@ __pycache__/
 reception.db
 last_label.png
 exports/
+build/
+dist/
