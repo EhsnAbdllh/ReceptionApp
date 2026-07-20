@@ -68,16 +68,22 @@ class DataTab(QWidget):
         
         layout = QVBoxLayout()
         
+        # Debounce timer for search
+        from PyQt6.QtCore import QTimer
+        self.search_timer = QTimer()
+        self.search_timer.setSingleShot(True)
+        self.search_timer.timeout.connect(self.on_search_timeout)
+        
         filter_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("جستجو (نام، موبایل، کد)...")
-        self.search_input.textChanged.connect(self.load_data)
+        self.search_input.textChanged.connect(self.on_search_changed)
         
         self.session_filter = QComboBox()
         self.session_filter.addItem("همه سانس‌ها", None)
         for s in Session.select():
             self.session_filter.addItem(f"سانس {to_persian_digits(s.session_number)}", s.id)
-        self.session_filter.currentIndexChanged.connect(self.load_data)
+        self.session_filter.currentIndexChanged.connect(self.on_session_changed)
         
         export_btn = QPushButton("خروجی اکسل")
         export_btn.clicked.connect(self.export_excel)
@@ -100,6 +106,10 @@ class DataTab(QWidget):
         summary_layout.addStretch()
         layout.addLayout(summary_layout)
         
+        # Pagination variables
+        self.current_page = 1
+        self.page_size = 50
+        
         self.table = QTableWidget()
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels(["کد", "نام", "موبایل", "زمان ثبت", "سانس", "عملیات"])
@@ -107,6 +117,26 @@ class DataTab(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         layout.addWidget(self.table)
+        
+        # Pagination layout
+        pagination_layout = QHBoxLayout()
+        pagination_layout.addStretch()
+        
+        self.prev_btn = QPushButton("صفحه قبل")
+        self.prev_btn.clicked.connect(self.prev_page)
+        
+        self.page_label = QLabel("صفحه ۱")
+        self.page_label.setStyleSheet("font-size: 14px; font-weight: bold; margin: 0 15px;")
+        
+        self.next_btn = QPushButton("صفحه بعد")
+        self.next_btn.clicked.connect(self.next_page)
+        
+        pagination_layout.addWidget(self.prev_btn)
+        pagination_layout.addWidget(self.page_label)
+        pagination_layout.addWidget(self.next_btn)
+        pagination_layout.addStretch()
+        
+        layout.addLayout(pagination_layout)
         
         self.setLayout(layout)
         self.load_data()
@@ -137,10 +167,47 @@ class DataTab(QWidget):
             
         return query
 
+    def on_search_changed(self):
+        # Reset to page 1 and start debounce timer
+        self.current_page = 1
+        self.search_timer.start(300)
+
+    def on_search_timeout(self):
+        self.load_data()
+
+    def on_session_changed(self):
+        self.current_page = 1
+        self.load_data()
+
+    def prev_page(self):
+        if self.current_page > 1:
+            self.current_page -= 1
+            self.load_data()
+
+    def next_page(self):
+        self.current_page += 1
+        self.load_data()
+
     def load_data(self):
-        query = self.get_query()
-        self.table.setRowCount(query.count())
-        for row, reg in enumerate(query):
+        self.table.setRowCount(0)
+        
+        base_query = self.get_query()
+        total_count = base_query.count()
+        
+        import math
+        total_pages = math.ceil(total_count / self.page_size)
+        if total_pages == 0:
+            total_pages = 1
+            
+        if self.current_page > total_pages:
+            self.current_page = total_pages
+        if self.current_page < 1:
+            self.current_page = 1
+            
+        paginated_query = base_query.limit(self.page_size).offset((self.current_page - 1) * self.page_size)
+        
+        self.table.setRowCount(paginated_query.count())
+        for row, reg in enumerate(paginated_query):
             self.table.setItem(row, 0, QTableWidgetItem(to_persian_digits(str(reg.id)[:4])))
             self.table.setItem(row, 1, QTableWidgetItem(reg.full_name))
             self.table.setItem(row, 2, QTableWidgetItem(to_persian_digits(reg.phone_number)))
@@ -195,7 +262,17 @@ class DataTab(QWidget):
             
             self.table.setCellWidget(row, 5, action_widget)
             
-        self.summary_label.setText(f"تعداد کل نمایش داده شده: {to_persian_digits(query.count())}")
+        start_idx = (self.current_page - 1) * self.page_size + 1 if total_count > 0 else 0
+        end_idx = min(self.current_page * self.page_size, total_count)
+        
+        self.summary_label.setText(
+            f"نمایش {to_persian_digits(start_idx)} تا {to_persian_digits(end_idx)} از "
+            f"کل {to_persian_digits(total_count)} پذیرش"
+        )
+        
+        self.page_label.setText(to_persian_digits(f"صفحه {self.current_page} از {total_pages}"))
+        self.prev_btn.setEnabled(self.current_page > 1)
+        self.next_btn.setEnabled(self.current_page < total_pages)
 
     def edit_registrant(self, registrant):
         dialog = EditRegistrantDialog(registrant, self)
