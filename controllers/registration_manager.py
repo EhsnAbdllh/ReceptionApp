@@ -9,9 +9,13 @@ class RegistrationManager:
     def validate_phone(phone):
         if not phone:
             return False
-        # Iranian mobile format: 11 digits, starts with 09
-        pattern = r'^09\d{9}$'
-        return bool(re.match(pattern, phone))
+        # Normalize digits and strip spaces/dashes
+        from utils.persian_utils import to_english_digits
+        phone = to_english_digits(phone).strip()
+        phone_clean = re.sub(r'[\s\-()]+', '', phone)
+        # Allows optional leading '+' followed by 5 to 15 digits
+        pattern = r'^\+?\d{5,15}$'
+        return bool(re.match(pattern, phone_clean))
 
     @staticmethod
     def validate_name(name):
@@ -25,8 +29,14 @@ class RegistrationManager:
         if not RegistrationManager.validate_name(full_name):
             return False, "نام وارد شده نامعتبر است."
 
+        # Clean and normalize phone number
+        if phone_number:
+            from utils.persian_utils import to_english_digits
+            phone_number = to_english_digits(phone_number).strip()
+            phone_number = re.sub(r'[\s\-()]+', '', phone_number)
+            
         if not RegistrationManager.validate_phone(phone_number):
-            return False, "شماره موبایل نامعتبر است. (مثال: 09123456789)"
+            return False, "شماره موبایل نامعتبر است. (مثال: 09123456789 یا +964...)"
 
         # Check if the session's time is over
         now = jdatetime.datetime.now()
@@ -74,8 +84,14 @@ class RegistrationManager:
         if not RegistrationManager.validate_name(new_name):
             return False, "نام وارد شده نامعتبر است."
 
+        # Clean and normalize phone number
+        if new_phone:
+            from utils.persian_utils import to_english_digits
+            new_phone = to_english_digits(new_phone).strip()
+            new_phone = re.sub(r'[\s\-()]+', '', new_phone)
+
         if not RegistrationManager.validate_phone(new_phone):
-            return False, "شماره موبایل نامعتبر است. (مثال: 09123456789)"
+            return False, "شماره موبایل نامعتبر است. (مثال: 09123456789 یا +964...)"
             
         try:
             reg = Registrant.get_by_id(registrant_id)

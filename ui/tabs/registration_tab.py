@@ -43,7 +43,7 @@ class RegistrationTab(QWidget):
         
         form_layout.addWidget(QLabel("شماره موبایل والدین:"))
         self.phone_input = QLineEdit()
-        self.phone_input.setPlaceholderText("شماره موبایل (مثال: 09123456789)")
+        self.phone_input.setPlaceholderText("شماره موبایل (مثال: 09123456789 یا +964...)")
         self.phone_input.setStyleSheet("padding: 6px; font-size: 14px;")
         form_layout.addWidget(self.phone_input)
         
