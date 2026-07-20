@@ -21,6 +21,7 @@ class EditRegistrantDialog(QDialog):
         self.name_input = QLineEdit(self.registrant.full_name)
         self.name_input.setMaxLength(24)
         self.phone_input = QLineEdit(self.registrant.phone_number)
+        self.phone_input.setAlignment(Qt.AlignmentFlag.AlignLeft)
         
         self.id_input = QLineEdit(str(self.registrant.id)[:4])
         self.id_input.setReadOnly(True)
@@ -211,7 +212,7 @@ class DataTab(QWidget):
         for row, reg in enumerate(paginated_query):
             self.table.setItem(row, 0, QTableWidgetItem(to_persian_digits(str(reg.id)[:4])))
             self.table.setItem(row, 1, QTableWidgetItem(reg.full_name))
-            self.table.setItem(row, 2, QTableWidgetItem(to_persian_digits(reg.phone_number)))
+            self.table.setItem(row, 2, QTableWidgetItem("\u200e" + to_persian_digits(reg.phone_number)))
             self.table.setItem(row, 3, QTableWidgetItem(to_persian_digits(reg.registration_time)))
             self.table.setItem(row, 4, QTableWidgetItem(to_persian_digits(str(reg.session.session_number))))
             

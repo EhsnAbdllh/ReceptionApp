@@ -157,7 +157,7 @@ class PrinterService:
         center_middle = line2 + (line1 - line2) // 2
         
         name_text = registrant.full_name
-        phone_text = f"{parent_phone_label}: {to_persian_digits(registrant.phone_number)}"
+        phone_text = f"{parent_phone_label}: \u200e{to_persian_digits(registrant.phone_number)}"
         
         # Extract time portion (HH:MM) from registration_time
         time_part = registrant.registration_time.split(' ')[-1] if ' ' in registrant.registration_time else registrant.registration_time
@@ -179,8 +179,8 @@ class PrinterService:
         short_id = to_persian_digits(str(registrant.id)[:4])
         code_text = to_persian_digits(f"کد پذیرش: {short_id}")
         
-        phone1_text = to_persian_digits(phone1_raw)
-        phone2_text = to_persian_digits(phone2_raw)
+        phone1_text = f"\u200e{to_persian_digits(phone1_raw)}"
+        phone2_text = f"\u200e{to_persian_digits(phone2_raw)}"
         
         d.text((center_bottom, 45), prep_text(date_text), font=font_base, fill=(0,0,0), anchor="mm")
         d.text((center_bottom, 100), prep_text(code_text), font=font_base, fill=(0,0,0), anchor="mm")
