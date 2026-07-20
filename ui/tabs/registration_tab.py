@@ -173,7 +173,9 @@ class RegistrationTab(QWidget):
         )
         
         if success:
-            QMessageBox.information(self, "نتیجه", msg)
+            main_win = self.window()
+            if hasattr(main_win, 'statusBar'):
+                main_win.statusBar().showMessage(msg, 5000)
             self.name_input.clear()
             self.phone_input.clear()
             self.update_session_info()

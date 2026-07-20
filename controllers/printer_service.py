@@ -116,9 +116,24 @@ class PrinterService:
         center_top = line1 + (right_margin - line1) // 2
         amood_str = to_persian_digits(AMOOD_NUMBER) if "عمود" in AMOOD_NUMBER else to_persian_digits(f"عمود {AMOOD_NUMBER}")
         
-        logo_path = BASE_DIR.parent / "لوگوی جزیره امید.jpg"
+        import sys
+        from pathlib import Path
+        
+        possible_logo_paths = [
+            BASE_DIR / "assets" / "لوگوی جزیره امید.jpg",
+            Path(sys.executable).parent / "لوگوی جزیره امید.jpg" if getattr(sys, 'frozen', False) else None,
+            BASE_DIR.parent / "لوگوی جزیره امید.jpg",
+            Path(sys.argv[0]).parent / "لوگوی جزیره امید.jpg",
+        ]
+        
+        logo_path = None
+        for path in possible_logo_paths:
+            if path and path.exists():
+                logo_path = path
+                break
+                
         logo_drawn = False
-        if logo_path.exists():
+        if logo_path:
             try:
                 logo_img = Image.open(logo_path)
                 # Resize the logo to fit Section 1 larger (160x160 px)

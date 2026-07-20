@@ -52,7 +52,10 @@ class EditRegistrantDialog(QDialog):
         
         success, msg = RegistrationManager.update_registrant(self.registrant.id, new_name, new_phone)
         if success:
-            QMessageBox.information(self, "موفق", msg)
+            from PyQt6.QtWidgets import QApplication
+            main_win = QApplication.activeWindow()
+            if main_win and hasattr(main_win, 'statusBar'):
+                main_win.statusBar().showMessage(msg, 4000)
             self.accept()
         else:
             QMessageBox.warning(self, "خطا", msg)
@@ -201,7 +204,9 @@ class DataTab(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             success, msg = RegistrationManager.delete_registrant(registrant.id)
             if success:
-                QMessageBox.information(self, "موفق", msg)
+                main_win = self.window()
+                if hasattr(main_win, 'statusBar'):
+                    main_win.statusBar().showMessage(msg, 4000)
                 self.load_data()
             else:
                 QMessageBox.warning(self, "خطا", msg)
@@ -209,14 +214,26 @@ class DataTab(QWidget):
     def reprint_label(self, registrant):
         try:
             PrinterService.print_label(registrant)
-            QMessageBox.information(self, "موفق", "دستور چاپ ارسال شد.")
+            main_win = self.window()
+            if hasattr(main_win, 'statusBar'):
+                main_win.statusBar().showMessage("دستور چاپ با موفقیت ارسال شد.", 4000)
         except Exception as e:
             QMessageBox.warning(self, "خطا", f"خطا در چاپ: {e}")
 
     def export_excel(self):
         try:
+            import os
             query = self.get_query()
             path = ExportService.export_to_excel(query)
-            QMessageBox.information(self, "موفق", f"فایل با موفقیت در مسیر زیر ذخیره شد:\n{path}")
+            
+            # Automatically open the exported file on Windows
+            try:
+                os.startfile(path)
+            except Exception as e:
+                print(f"Error opening exported excel file: {e}")
+                
+            main_win = self.window()
+            if hasattr(main_win, 'statusBar'):
+                main_win.statusBar().showMessage("فایل اکسل با موفقیت ایجاد و باز شد.", 5000)
         except Exception as e:
             QMessageBox.warning(self, "خطا", f"خطا در ایجاد فایل اکسل: {e}")

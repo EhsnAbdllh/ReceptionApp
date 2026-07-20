@@ -1,11 +1,22 @@
 import sys
+import shutil
+from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QFont, QFontDatabase
 from models.database import init_db
 from ui.main_window import MainWindow
-from config.settings import FONT_PATH
+from config.settings import FONT_PATH, BASE_DIR
 
 def main():
+    # Ensure the logo file is copied to the assets folder in dev mode for packaging
+    try:
+        src_logo = BASE_DIR.parent / "لوگوی جزیره امید.jpg"
+        dst_logo = BASE_DIR / "assets" / "لوگوی جزیره امید.jpg"
+        if src_logo.exists() and not dst_logo.exists():
+            shutil.copy(src_logo, dst_logo)
+    except Exception as e:
+        print(f"Warning: Could not auto-copy logo to assets: {e}")
+
     init_db()
     
     app = QApplication(sys.argv)
