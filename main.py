@@ -14,8 +14,15 @@ def main():
         dst_logo = BASE_DIR / "assets" / "لوگوی جزیره امید.jpg"
         if src_logo.exists() and not dst_logo.exists():
             shutil.copy(src_logo, dst_logo)
+            
+        # Also auto-generate icon.ico in the parent directory for packaging if missing
+        ico_path = BASE_DIR.parent / "icon.ico"
+        if src_logo.exists() and not ico_path.exists():
+            from PIL import Image
+            img = Image.open(src_logo)
+            img.save(ico_path, format="ICO", sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
     except Exception as e:
-        print(f"Warning: Could not auto-copy logo to assets: {e}")
+        print(f"Warning: Could not auto-copy logo or generate icon.ico: {e}")
 
     init_db()
     

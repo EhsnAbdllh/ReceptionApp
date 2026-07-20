@@ -1,5 +1,9 @@
 from PyQt6.QtWidgets import QMainWindow, QTabWidget
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
+import sys
+from pathlib import Path
+from config.settings import BASE_DIR
 from ui.tabs.session_tab import SessionTab
 from ui.tabs.registration_tab import RegistrationTab
 from ui.tabs.data_tab import DataTab
@@ -10,6 +14,20 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("نرم‌افزار مدیریت پذیرش و ثبت‌نام")
         self.setMinimumSize(1000, 700)
         self.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
+        
+        # Load and set application window icon
+        possible_logo_paths = [
+            BASE_DIR / "assets" / "لوگوی جزیره امید.jpg",
+            Path(sys.executable).parent / "لوگوی جزیره امید.jpg" if getattr(sys, 'frozen', False) else None,
+            BASE_DIR.parent / "لوگوی جزیره امید.jpg",
+        ]
+        logo_path = None
+        for path in possible_logo_paths:
+            if path and path.exists():
+                logo_path = path
+                break
+        if logo_path:
+            self.setWindowIcon(QIcon(str(logo_path)))
         
         self.tabs = QTabWidget()
         
