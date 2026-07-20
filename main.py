@@ -21,12 +21,37 @@ def main():
     
     app = QApplication(sys.argv)
     
-    font_id = QFontDatabase.addApplicationFont(str(FONT_PATH))
+    # Find the font file using multiple fallback paths
+    possible_font_paths = [
+        FONT_PATH,
+        BASE_DIR / "assets" / "Vazirmatn-Regular.ttf",
+        Path(sys.argv[0]).parent / "assets" / "Vazirmatn-Regular.ttf",
+        Path(sys.executable).parent / "assets" / "Vazirmatn-Regular.ttf" if getattr(sys, 'frozen', False) else None,
+        Path(sys.executable).parent / "_internal" / "assets" / "Vazirmatn-Regular.ttf" if getattr(sys, 'frozen', False) else None,
+    ]
+    
+    font_path = None
+    for p in possible_font_paths:
+        if p and p.exists():
+            font_path = p
+            break
+
+    font_id = -1
+    if font_path:
+        font_id = QFontDatabase.addApplicationFont(str(font_path))
+
     if font_id != -1:
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-        app.setFont(QFont(font_family, 12))
+        font = QFont(font_family, 12)
     else:
-        print("Warning: Vazirmatn font not found, falling back to default.")
+        # Fall back to high-quality system Persian fonts if the asset is missing
+        print("Warning: Vazirmatn font not found, falling back to Segoe UI / Tahoma.")
+        font = QFont("Segoe UI", 12)
+        font.setFamilies(["Segoe UI", "Tahoma", "Arial"])
+
+    # Force the OS rendering engine to antialias (smooth) the text (crucial for older Windows systems)
+    font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
+    app.setFont(font)
         
     app.setStyleSheet("""
         QLabel, QHeaderView::section {
