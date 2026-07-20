@@ -66,6 +66,11 @@ class RegistrationTab(QWidget):
         submit_btn.clicked.connect(self.register_user)
         form_layout.addWidget(submit_btn)
         
+        self.status_label = QLabel()
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_label.setStyleSheet("font-size: 14px; font-weight: bold; margin-top: 10px;")
+        form_layout.addWidget(self.status_label)
+        
         layout.addLayout(form_layout)
         layout.addStretch()
         
@@ -173,11 +178,15 @@ class RegistrationTab(QWidget):
         )
         
         if success:
-            main_win = self.window()
-            if hasattr(main_win, 'statusBar'):
-                main_win.statusBar().showMessage(msg, 5000)
+            self.show_status_message(msg)
             self.name_input.clear()
             self.phone_input.clear()
             self.update_session_info()
         else:
             QMessageBox.warning(self, "خطا", msg)
+
+    def show_status_message(self, message, is_success=True):
+        color = "#2e7d32" if is_success else "#c62828"
+        self.status_label.setText(message)
+        self.status_label.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold; margin-top: 10px;")
+        QTimer.singleShot(4000, lambda: self.status_label.setText(""))

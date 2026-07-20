@@ -117,6 +117,10 @@ class SessionTab(QWidget):
         
         layout.addLayout(form_layout)
         
+        self.status_label = QLabel()
+        self.status_label.setStyleSheet("font-size: 14px; font-weight: bold; margin-bottom: 5px;")
+        layout.addWidget(self.status_label)
+        
         self.table = QTableWidget()
         self.table.setColumnCount(5)
         self.table.setHorizontalHeaderLabels(["شماره سانس", "زمان شروع", "زمان پایان", "ظرفیت کل", "عملیات"])
@@ -188,9 +192,7 @@ class SessionTab(QWidget):
             num = SessionManager.get_next_session_number()
             Session.create(session_number=num, start_time=start, end_time=end, total_capacity=cap)
             
-            main_win = self.window()
-            if hasattr(main_win, 'statusBar'):
-                main_win.statusBar().showMessage("سانس با موفقیت اضافه شد.", 4000)
+            self.show_status_message("✓ سانس با موفقیت اضافه شد.")
                 
             self.cap_input.clear()
             self.load_data()
@@ -204,33 +206,21 @@ class SessionTab(QWidget):
         dialog = EditSessionDialog(session, self)
         if dialog.exec():
             self.load_data()
+            self.show_status_message("✓ سانس با موفقیت ویرایش شد.")
 
     def delete_session(self, session):
         registrants_count = Registrant.select().where(Registrant.session == session).count()
         if registrants_count > 0:
             msg_box = QMessageBox(self)
-            msg_box.setIcon(QMessageBox.Icon.Critical)
-            msg_box.setWindowTitle("هشدار بسیار مهم: حذف زنجیره‌ای")
-            msg_box.setText("<font color='#d32f2f'><b>توجه: خطر حذف اطلاعات پذیرش‌ها!</b></font>")
+            msg_box.setIcon(QMessageBox.Icon.Warning)
+            msg_box.setWindowTitle("حذف سانس")
+            msg_box.setText("<font color='#d32f2f'><b>توجه: حذف این سانس باعث حذف پذیرش‌های آن می‌شود!</b></font>")
             msg_box.setInformativeText(
-                f"با حذف این سانس، <b>تمامی {registrants_count} پذیرش انجام گرفته در آن نیز به صورت زنجیره‌ای حذف خواهند شد!</b><br><br>"
-                "این عملیات غیرقابل بازگشت است. آیا کاملاً مطمئن هستید؟"
+                f"با حذف این سانس، تمامی {registrants_count} پذیرش انجام گرفته در آن نیز به صورت زنجیره‌ای حذف خواهند شد.\n\n"
+                "آیا مطمئن هستید؟"
             )
             msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             msg_box.setDefaultButton(QMessageBox.StandardButton.No)
-            msg_box.setStyleSheet("""
-                QMessageBox {
-                    background-color: #ffebee;
-                    font-size: 14px;
-                }
-                QLabel {
-                    color: #333333;
-                }
-                QPushButton {
-                    padding: 6px 15px;
-                    font-weight: bold;
-                }
-            """)
             reply = msg_box.exec()
             if reply == QMessageBox.StandardButton.No:
                 return
@@ -244,9 +234,14 @@ class SessionTab(QWidget):
                 
         try:
             SessionManager.delete_session(session.id)
-            main_win = self.window()
-            if hasattr(main_win, 'statusBar'):
-                main_win.statusBar().showMessage("سانس با موفقیت حذف شد.", 4000)
+            self.show_status_message("✓ سانس با موفقیت حذف شد.")
             self.load_data()
         except Exception as e:
             QMessageBox.warning(self, "خطا", f"خطا در حذف: {e}")
+
+    def show_status_message(self, message, is_success=True):
+        from PyQt6.QtCore import QTimer
+        color = "#2e7d32" if is_success else "#c62828"
+        self.status_label.setText(message)
+        self.status_label.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold; margin-bottom: 5px;")
+        QTimer.singleShot(4000, lambda: self.status_label.setText(""))

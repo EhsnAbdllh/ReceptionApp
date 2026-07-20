@@ -91,8 +91,14 @@ class DataTab(QWidget):
         filter_layout.addWidget(export_btn)
         layout.addLayout(filter_layout)
         
+        summary_layout = QHBoxLayout()
         self.summary_label = QLabel("")
-        layout.addWidget(self.summary_label)
+        self.status_label = QLabel("")
+        self.status_label.setStyleSheet("font-size: 14px; font-weight: bold;")
+        summary_layout.addWidget(self.summary_label)
+        summary_layout.addWidget(self.status_label)
+        summary_layout.addStretch()
+        layout.addLayout(summary_layout)
         
         self.table = QTableWidget()
         self.table.setColumnCount(6)
@@ -195,6 +201,7 @@ class DataTab(QWidget):
         dialog = EditRegistrantDialog(registrant, self)
         if dialog.exec():
             self.load_data()
+            self.show_status_message("✓ اطلاعات پذیرش با موفقیت ویرایش شد.")
 
     def delete_registrant(self, registrant):
         reply = QMessageBox.question(self, 'حذف ثبت‌نام', 
@@ -204,9 +211,7 @@ class DataTab(QWidget):
         if reply == QMessageBox.StandardButton.Yes:
             success, msg = RegistrationManager.delete_registrant(registrant.id)
             if success:
-                main_win = self.window()
-                if hasattr(main_win, 'statusBar'):
-                    main_win.statusBar().showMessage(msg, 4000)
+                self.show_status_message(msg)
                 self.load_data()
             else:
                 QMessageBox.warning(self, "خطا", msg)
@@ -214,9 +219,7 @@ class DataTab(QWidget):
     def reprint_label(self, registrant):
         try:
             PrinterService.print_label(registrant)
-            main_win = self.window()
-            if hasattr(main_win, 'statusBar'):
-                main_win.statusBar().showMessage("دستور چاپ با موفقیت ارسال شد.", 4000)
+            self.show_status_message("✓ دستور چاپ با موفقیت ارسال شد.")
         except Exception as e:
             QMessageBox.warning(self, "خطا", f"خطا در چاپ: {e}")
 
@@ -232,8 +235,13 @@ class DataTab(QWidget):
             except Exception as e:
                 print(f"Error opening exported excel file: {e}")
                 
-            main_win = self.window()
-            if hasattr(main_win, 'statusBar'):
-                main_win.statusBar().showMessage("فایل اکسل با موفقیت ایجاد و باز شد.", 5000)
+            self.show_status_message("✓ فایل اکسل با موفقیت ایجاد و باز شد.")
         except Exception as e:
             QMessageBox.warning(self, "خطا", f"خطا در ایجاد فایل اکسل: {e}")
+
+    def show_status_message(self, message, is_success=True):
+        from PyQt6.QtCore import QTimer
+        color = "#2e7d32" if is_success else "#c62828"
+        self.status_label.setText(message)
+        self.status_label.setStyleSheet(f"color: {color}; font-size: 14px; font-weight: bold; margin-right: 15px;")
+        QTimer.singleShot(4000, lambda: self.status_label.setText(""))
