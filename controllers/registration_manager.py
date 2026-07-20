@@ -19,7 +19,7 @@ class RegistrationManager:
 
     @staticmethod
     def validate_name(name):
-        return bool(name and len(name.strip()) > 2)
+        return bool(name and 2 < len(name.strip()) <= 24)
 
     @staticmethod
     def register(full_name, phone_number, session, print_lang="fa"):
@@ -27,7 +27,7 @@ class RegistrationManager:
             return False, "سانس فعالی یافت نشد."
         
         if not RegistrationManager.validate_name(full_name):
-            return False, "نام وارد شده نامعتبر است."
+            return False, "نام وارد شده نامعتبر است. (نام باید بین ۳ تا ۲۴ کاراکتر باشد)"
 
         # Clean and normalize phone number
         if phone_number:
@@ -82,7 +82,7 @@ class RegistrationManager:
     @staticmethod
     def update_registrant(registrant_id, new_name, new_phone):
         if not RegistrationManager.validate_name(new_name):
-            return False, "نام وارد شده نامعتبر است."
+            return False, "نام وارد شده نامعتبر است. (نام باید بین ۳ تا ۲۴ کاراکتر باشد)"
 
         # Clean and normalize phone number
         if new_phone:

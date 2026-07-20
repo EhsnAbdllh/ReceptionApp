@@ -19,6 +19,7 @@ class EditRegistrantDialog(QDialog):
         layout = QFormLayout()
         
         self.name_input = QLineEdit(self.registrant.full_name)
+        self.name_input.setMaxLength(24)
         self.phone_input = QLineEdit(self.registrant.phone_number)
         
         self.id_input = QLineEdit(str(self.registrant.id)[:4])

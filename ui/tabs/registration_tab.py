@@ -37,6 +37,7 @@ class RegistrationTab(QWidget):
         
         form_layout.addWidget(QLabel("نام و نام خانوادگی کودک:"))
         self.name_input = QLineEdit()
+        self.name_input.setMaxLength(24)
         self.name_input.setPlaceholderText("نام و نام خانوادگی")
         self.name_input.setStyleSheet("padding: 6px; font-size: 14px;")
         form_layout.addWidget(self.name_input)
