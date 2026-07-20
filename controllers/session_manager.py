@@ -38,28 +38,6 @@ class SessionManager:
         if start_dt >= end_dt:
             return False, "زمان پایان باید بعد از زمان شروع باشد."
 
-        # Rule 1: Duration must be exactly 30 minutes
-        duration = (end_dt - start_dt).total_seconds() / 60.0
-        if duration != 30.0:
-            return False, "مدت زمان هر سانس باید دقیقاً ۳۰ دقیقه باشد."
-
-        sessions = Session.select()
-        for session in sessions:
-            if exclude_session_id and session.id == exclude_session_id:
-                continue
-
-            s_start = SessionManager._parse_time(session.start_time)
-            s_end = SessionManager._parse_time(session.end_time)
-
-            # Rule 2: Overlap check
-            if max(start_dt, s_start) < min(end_dt, s_end):
-                return False, "تداخل زمانی با سانس‌های دیگر وجود دارد."
-
-            # Rule 3: Start times must be at least 45 minutes apart
-            start_diff = abs((start_dt - s_start).total_seconds()) / 60.0
-            if start_diff < 45.0:
-                return False, f"شروع سانس‌ها باید حداقل ۴۵ دقیقه از یکدیگر فاصله داشته باشد (تداخل با سانس {session.session_number})."
-
         return True, ""
 
     @staticmethod
